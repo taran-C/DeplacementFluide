@@ -3,6 +3,12 @@ uuid = "29081a06-c93b-47f2-b20b-e90acc4ceb6c"
 authors = ["Taran <taran.carluer@protonmail.com> and contributors"]
 version = "1.0.0-DEV"
 
+[deps]
+ArrayAllocators = "c9d4266f-a5cb-439d-837c-c97b191379f5"
+GFlops = "2ea8233c-34d4-5acc-88b4-02f326385bcc"
+NetCDF = "30363a11-5582-574a-97bb-aa9a979735b9"
+Printf = "de0858da-6303-5e67-8744-51eddeeeb8d7"
+
 [compat]
 julia = "1"
 

@@ -1,0 +1,5 @@
+A poser :
+    Direction interpolations (direction arbitraire/moyenne plusieurs dimensions/interpolation multivariée)
+
+Pour moi :
+    Ajouter une struct "variable" contenant les noms et autres informations des variables (prognostics/diagnostic, centre/face) représentées par des symboles ?
