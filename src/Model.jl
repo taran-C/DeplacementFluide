@@ -10,6 +10,7 @@ struct t_variable
     name::String
     write::Bool #wether to write the variable to disk
     gridPos::Symbol #values taken on :face or :center
+    type::Symbol
 end
 
 struct t_model
@@ -27,9 +28,9 @@ function getLorenz()
     params[3] = 8. / 3.
 
     variables = Array{t_variable}(undef, 3)
-    variables[1] = t_variable("x(t)", true, :center)
-    variables[2] = t_variable("y(t)", true, :center)
-    variables[3] = t_variable("z(t)", true, :center)
+    variables[1] = t_variable("x(t)", true, :center, :diagnostic)
+    variables[2] = t_variable("y(t)", true, :center, :diagnostic)
+    variables[3] = t_variable("z(t)", true, :center, :diagnostic)
 
     #update functions for the variables, in the same order
     functions = Array{Function}(undef, 3)
