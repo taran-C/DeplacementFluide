@@ -8,6 +8,7 @@ module TimeLoop
     include("IO.jl")
     include("Model.jl")
     include("GridBuffer.jl")
+    include("Integrate.jl")
 
     export simulate
 
@@ -28,21 +29,12 @@ module TimeLoop
                 @printf "\033[5D%d%%" (s*100/config.steps) #\033[5D : escaped CSI control sequence to position the cursor
             end
 
-            #The actual computations
-            for i = 1:config.gridSizes[1]
-                for j = 1:config.gridSizes[2]
-                    for k = 1:config.gridSizes[3]
-                        for v = 1:model.varNum
-                            buffer.data[v, buffer.currentIndex + 1, i, j, k] = model.updateFuncs[v](model, buffer, i,j,k)
-                        end
-                    end
-                end
-            end
+            Integrate.step(config, model, buffer)
 
             if buffer.currentIndex == buffer.size -1
                 # Write to NC file
                 for v = 1:model.varNum
-                    if model.variables[v].type == :diagnostic
+                    if model.variables[v].type == :prognostic
                         NetCDF.ncwrite(buffer.data[v,:,:,:,:], string(@__DIR__, "/../output/", config.filename), model.variables[v].name, start = [s - buffer.size + 2,1,1,1])
                     end
                 end
@@ -55,7 +47,7 @@ module TimeLoop
 
         #Writing what remains in the buffer
         for v = 1:model.varNum
-            if model.variables[v].type == :diagnostic
+            if model.variables[v].type == :prognostic
                 NetCDF.ncwrite(buffer.data[v,:,:,:,:], string(@__DIR__, "/../output/", config.filename), model.variables[v].name, start = [config.steps-config.steps%buffer.size,1,1,1], count = [buffer.currentIndex,-1,-1,-1])
             end
         end

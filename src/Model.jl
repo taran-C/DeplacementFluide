@@ -18,30 +18,28 @@ struct t_model
     varNum::Integer
     variables::Array{t_variable}
     deltaT::AbstractFloat
-    updateFuncs::Array{Function}
+    RHS::Function
 end
 
 function getLorenz()
     params = Array{Float64}(undef, 3)
-    params[1] = 10.
-    params[2] = 28.
-    params[3] = 8. / 3.
+    params[1] = 10. #sigma
+    params[2] = 28. #rho
+    params[3] = 8. / 3. #beta
 
     variables = Array{t_variable}(undef, 3)
-    variables[1] = t_variable("x(t)", true, :center, :diagnostic)
-    variables[2] = t_variable("y(t)", true, :center, :diagnostic)
-    variables[3] = t_variable("z(t)", true, :center, :diagnostic)
+    variables[1] = t_variable("x(t)", true, :center, :prognostic)
+    variables[2] = t_variable("y(t)", true, :center, :prognostic)
+    variables[3] = t_variable("z(t)", true, :center, :prognostic)
 
     #update functions for the variables, in the same order
     functions = Array{Function}(undef, 3)
-    f1(model::t_model, buffer, i::Integer, j::Integer, k::Integer) = model.deltaT * model.params[1] * (GridBuffer.get(buffer, 2, 1, :center, buffer.currentIndex, i,j,k) - GridBuffer.get(buffer, 1, 1, :center, buffer.currentIndex, i,j,k)) + GridBuffer.get(buffer, 1, 1, :center, buffer.currentIndex, i,j,k)
-    f2(model::t_model, buffer, i::Integer, j::Integer, k::Integer) = model.params[2] * model.deltaT * GridBuffer.get(buffer, 1, 1, :center, buffer.currentIndex, i,j,k) + GridBuffer.get(buffer, 2, 1, :center, buffer.currentIndex, i,j,k) * (1. - model.deltaT) - model.deltaT * GridBuffer.get(buffer, 1, 1, :center, buffer.currentIndex, i,j,k) * GridBuffer.get(buffer, 3, 1, :center, buffer.currentIndex, i,j,k)
-    f3(model::t_model, buffer, i::Integer, j::Integer, k::Integer) = model.deltaT * GridBuffer.get(buffer, 1, 1, :center, buffer.currentIndex, i,j,k) * GridBuffer.get(buffer, 2, 1, :center, buffer.currentIndex, i,j,k) + GridBuffer.get(buffer, 3, 1, :center, buffer.currentIndex, i,j,k) * (1. - model.deltaT * model.params[3])
-    functions[1] = f1
-    functions[2] = f2
-    functions[3] = f3
 
-    m = t_model(params, 3, variables, 0.01, functions)
+    RHS(vars) = [params[1] * (vars[2] .- vars[1]), # σ[y(t)-x(t)]
+                params[2] * vars[1] .- vars[2] .- vars[1] .* vars[3], # ρx(t) - y(t) -x(t)z(t)
+                vars[1] .* vars[2] .- params[3] * vars[3]] # x(t)y(t) - βz(t)
+
+    m = t_model(params, 3, variables, 0.01, RHS)
 
     return m
 end

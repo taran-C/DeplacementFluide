@@ -44,16 +44,16 @@ function getOneBuffer(size::Integer, model, gridSizes::Array{Integer})
 end
 
 #returns a certain value with interpolation if necessary TODO remove I guess, too specific
-function get(buffer, varNum::Integer, interpOrder::Integer, mode::Symbol, t::Integer, i::Integer, j::Integer, k::Integer)
-    if t<=0
-        t = t%buffer.size+buffer.size
-    end
+# function get(buffer, varNum::Integer, interpOrder::Integer, mode::Symbol, t::Integer, i::Integer, j::Integer, k::Integer)
+#     if t<=0
+#         t = t%buffer.size+buffer.size
+#     end
 
-    if mode!=buffer.model.variables[varNum].gridPos
-        return interpolate(buffer.data[varNum, t, i, j, :], k, interpOrder)
-    else
-        return buffer.data[varNum, t, i, j, k]
-    end
-end
+#     if mode!=buffer.model.variables[varNum].gridPos
+#         return interpolate(buffer.data[varNum, t, i, j, :], k, interpOrder)
+#     else
+#         return buffer.data[varNum, t, i, j, k]
+#     end
+# end
 
 end
