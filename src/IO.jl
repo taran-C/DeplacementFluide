@@ -11,7 +11,9 @@ module IO
         end
 
         for i = 1:model.varNum
-            NetCDF.nccreate(filename, model.variables[i].name, "t", -1, "x", config.gridSizes[1], "y", config.gridSizes[2], "z", config.gridSizes[3])
+            if model.variables[i].write
+                NetCDF.nccreate(filename, model.variables[i].name, "t", -1, "x", config.gridSizes[1], "y", config.gridSizes[2], "z", config.gridSizes[3])
+            end
         end
     end
 end
