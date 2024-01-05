@@ -60,7 +60,7 @@ function getTransport3DTraceurFlux()
         v1 = zeros(size(vars[1,:,:,:])...) #velocity field is constant, bad, should have constant fields as parameters I guess ?
         v2 = zeros(size(vars[1,:,:,:])...)
         v3 = zeros(size(vars[1,:,:,:])...)
-        v4 = - GridBuffer.div3D(vars[4,:,:,:] .* vars[1,:,:,:], vars[4,:,:,:] .* vars[2,:,:,:], vars[4,:,:,:] .* vars[3,:,:,:]) # -∇·(Uq)
+        v4 = - GridBuffer.div(vars[4,:,:,:] .* vars[1,:,:,:], vars[4,:,:,:] .* vars[2,:,:,:], vars[4,:,:,:] .* vars[3,:,:,:]) # -∇·(Uq)
 
         return permutedims(cat(v1,v2,v3,v4, dims=4), [4,1,2,3]) #ugly and unefficient TODO improve
     end

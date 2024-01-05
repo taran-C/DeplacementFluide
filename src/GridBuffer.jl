@@ -37,14 +37,30 @@ function fda(q, i)
     end
 end
 
-function div3D(U, V, W) #to vectorize
+function div(U, V, W) #to vectorize
     res = zeros(size(U)...)
 
     for i = 1:size(U)[1]-1, j = 1:size(V)[2]-1, k = 1:size(W)[3]-1
         res[i,j,k] = U[i,j,k] .- U[i+1,j,k] .+ V[i,j,k] .- V[i,j+1,k] .+ W[i,j,k] .- W[i,j,k+1]
     end
-    #@printf "%s\n" res[2,2,2]
+    
     return res
+end
+
+function grad(q) #to vectorize
+    res = zeros(3, size(q)...)
+
+    for i = 1:size(q)[1]-1, j = 1:size(q)[2]-1, k = 1:size(q)[3]-1
+        res[1,i,j,k] = q[i,j,k]-q[i+1,j,k]
+        res[2,i,j,k] = q[i,j,k]-q[i,j+1,k]
+        res[3,i,j,k] = q[i,j,k]-q[i,j,k+1]
+    end
+
+    return res
+end
+
+function cross(u1,v1,w1,u2,v2,w2)
+    return [v1.*w2 .- w1.*v2;;;; w1.*u2 .- u1.*w2;;;; u1.*v2 .- v1.*u2]
 end
 
 #Returns array of values initialized at one TODO function to initialize array from array of timesteps
@@ -57,9 +73,31 @@ end
 function getTracerDiffInitBuffer(size::Integer, model, gridSizes::Array{Integer})
     data = Array{Float64,5}(undef, model.varNum, size, gridSizes...)
 
-    for v = 1:3, i = 1:gridSizes[1], j = 1:gridSizes[2], k = 1:gridSizes[3]
-        data[v, 1, i,j,k] = sin(i)*sin(j)*sin(k)
+    #velocity field
+    psiA = Array{Float64,3}(undef, gridSizes...)
+    psiB = Array{Float64,3}(undef, gridSizes...)
+
+    for i = 1:gridSizes[1], j = 1:gridSizes[2], k = 1:gridSizes[3]
+        psiA[i,j,k] = sin(pi*i/gridSizes[1])*sin(pi*j/gridSizes[2])
+        psiB[i,j,k] = sin(pi*i/gridSizes[1])*sin(pi*k/gridSizes[3])
     end
+
+    gradA = grad(psiA)
+    gradB = grad(psiB)
+
+    one = ones(gridSizes...)
+    zero = zeros(gridSizes...)
+
+    Ua = cross(zero,zero,one, gradA[1,:,:,:], gradA[2,:,:,:], gradA[3,:,:,:])
+    Ub = cross(zero,one,zero, gradB[1,:,:,:], gradB[2,:,:,:], gradB[3,:,:,:])
+
+    v = Ua + Ub
+
+    v = permutedims(v, [4,1,2,3])
+
+    data[1,1,:,:,:] = v[1,:,:,:]
+    data[2,1,:,:,:] = v[2,:,:,:]
+    data[3,1,:,:,:] = v[3,:,:,:]
 
     #initial tracer distribution
     for i = 1:gridSizes[1], j = 1:gridSizes[2], k = 1:gridSizes[3]

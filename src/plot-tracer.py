@@ -22,6 +22,6 @@ fig.colorbar(cax)
 def animate(t):
     cax.set_array(q[:,:,t])
 
-animator = animation.FuncAnimation(fig, animate, interval=300, frames = 100)
+animator = animation.FuncAnimation(fig, animate, interval=20, frames = len(q[0,0,:]))
 animator.save('output/tracer.gif', dpi=200, writer='magick')
 plt.show()

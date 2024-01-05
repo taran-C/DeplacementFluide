@@ -6,6 +6,7 @@ include("Model.jl")
 include("IO.jl")
 include("RunConfig.jl")
 include("TimeLoop.jl")
+include("GridBuffer.jl")
 
 export start
 
