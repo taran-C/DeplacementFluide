@@ -12,15 +12,17 @@ module TimeLoop
 
     export simulate
 
-    function simulate(model, config)
+    function simulate(model, config, bufferInit)
 
         #creating the netCDF file to store our data
         IO.createNC(model, string(@__DIR__, "/../output/", config.filename), config)
-    
-        opPerc = config.steps/100 #number of steps correspondig to a percent of progress
 
-        #Initialization. TODO replace by proper Initialization for n first steps required by model with lower order schemes
-        buffer = GridBuffer.getTracerDiffInitBuffer(100, model, config.gridSizes)
+        #Initialization.
+        buffer = bufferInit(config.buffSize, model, config.gridSizes)
+
+        #setting up the progress display
+        opPerc = config.steps/100
+        @printf "0%%"
 
         for s = 1:config.steps
 
@@ -31,9 +33,9 @@ module TimeLoop
 
             Integrate.step!(config, model, buffer)
 
+
             if buffer.currentIndex == buffer.size -1
                 # Write to NC file
-                @printf "writing\n"
                 for v = 1:model.varNum
                     if model.variables[v].write
                         NetCDF.ncwrite(buffer.data[v,:,:,:,:], string(@__DIR__, "/../output/", config.filename), model.variables[v].name, start = [s - buffer.size + 2,1,1,1])
@@ -48,7 +50,6 @@ module TimeLoop
 
         #Writing what remains in the buffer
         for v = 1:model.varNum
-            @printf "writing\n"
             if model.variables[v].write
                 NetCDF.ncwrite(buffer.data[v,:,:,:,:], string(@__DIR__, "/../output/", config.filename), model.variables[v].name, start = [config.steps-config.steps%buffer.size,1,1,1], count = [buffer.currentIndex,-1,-1,-1])
             end

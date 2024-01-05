@@ -29,31 +29,31 @@ function interpolate(q, i, n)
 end
 
 #computes a FDA of dq at the point i
-function fda(q, i)
-    if i<length(q)
-        return (q[i]+q[i+1])/2
-    else 
-        return q[i]
-    end
-end
+# function fda(q, i)
+#     if i<length(q)
+#         return (q[i]+q[i+1])/2
+#     else 
+#         return q[i]
+#     end
+# end
 
-function div(U, V, W) #to vectorize
+function div(U, V, W) #to vectorize, centered TODO replace with upstream fda
     res = zeros(size(U)...)
 
-    for i = 1:size(U)[1]-1, j = 1:size(V)[2]-1, k = 1:size(W)[3]-1
-        res[i,j,k] = U[i,j,k] .- U[i+1,j,k] .+ V[i,j,k] .- V[i,j+1,k] .+ W[i,j,k] .- W[i,j,k+1]
+    for i = 2:size(U)[1]-1, j = 2:size(V)[2]-1, k = 2:size(W)[3]-1
+        res[i,j,k] = (U[i+1,j,k] - U[i-1,j,k] + V[i,j+1,k] - V[i,j-1,k] + W[i,j,k+1] - W[i,j,k-1])*0.5
     end
     
     return res
 end
 
-function grad(q) #to vectorize
+function grad(q) #to vectorize, centered TODO replace with upstream fda
     res = zeros(3, size(q)...)
 
-    for i = 1:size(q)[1]-1, j = 1:size(q)[2]-1, k = 1:size(q)[3]-1
-        res[1,i,j,k] = q[i,j,k]-q[i+1,j,k]
-        res[2,i,j,k] = q[i,j,k]-q[i,j+1,k]
-        res[3,i,j,k] = q[i,j,k]-q[i,j,k+1]
+    for i = 2:size(q)[1]-1, j = 2:size(q)[2]-1, k = 2:size(q)[3]-1
+        res[1,i,j,k] = (q[i+1,j,k]-q[i-1,j,k])*0.5
+        res[2,i,j,k] = (q[i,j+1,k]-q[i,j-1,k])*0.5
+        res[3,i,j,k] = (q[i,j,k+1]-q[i,j,k-1])*0.5
     end
 
     return res
