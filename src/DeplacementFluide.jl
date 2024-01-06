@@ -11,10 +11,8 @@ include("GridBuffer.jl")
 export start
 
 function start()
-    model = Model.getTransport3DTraceurFlux()
+    model = Model.getTransport3DTraceurScalaire()
     config = RunConfig.Config(1000, "a.nc", [100,100,10], :SSPRK3, 100)
-
-    @printf "Starting\n"
 
     @time TimeLoop.simulate(model, config, GridBuffer.getTracerDiffInitBuffer)
 

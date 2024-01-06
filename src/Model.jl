@@ -74,9 +74,9 @@ function getTransport3DTraceurScalaire()
     params = []
 
     variables = Array{t_variable}(undef, 4)
-    variables[1] = t_variable("U", true, :face) #Vector type for variables ?
-    variables[2] = t_variable("V", true, :face)
-    variables[3] = t_variable("W", true, :face)
+    variables[1] = t_variable("U", false, :face) #Vector type for variables ?
+    variables[2] = t_variable("V", false, :face)
+    variables[3] = t_variable("W", false, :face)
     variables[4] = t_variable("q", true, :center)
 
     #setting up update functions
@@ -87,12 +87,12 @@ function getTransport3DTraceurScalaire()
         
         gradq = GridBuffer.grad(vars[4,:,:,:])
         
-        v4 = - (vars[1,:,:,:] .* gradq[1] .+ vars[2,:,:,:] .* gradq[2] .+ vars[3,:,:,:] .* gradq[3]) # -U·∇q, should be interpolated
+        v4 = - (vars[1,:,:,:] .* gradq[1,:,:,:] .+ vars[2,:,:,:] .* gradq[2,:,:,:] .+ vars[3,:,:,:] .* gradq[3,:,:,:]) # -U·∇q, should be interpolated
         
         return permutedims(cat(v1,v2,v3,v4, dims=4), [4,1,2,3]) #ugly and unefficient TODO improve
     end
 
-    m = t_model(params, 4, variables, 0.1, RHS)
+    m = t_model(params, 4, variables, 1, RHS)
 
     return m
 end

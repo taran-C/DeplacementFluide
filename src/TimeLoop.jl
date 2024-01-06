@@ -3,6 +3,7 @@ module TimeLoop
     using ArrayAllocators
     using NetCDF
     using Printf
+    using Dates
 
     include("RunConfig.jl")
     include("IO.jl")
@@ -21,15 +22,12 @@ module TimeLoop
         buffer = bufferInit(config.buffSize, model, config.gridSizes)
 
         #setting up the progress display
-        opPerc = config.steps/100
-        @printf "0%%"
+        @printf "Starting...\n\n"
+        start = Dates.Time(Dates.now())
 
         for s = 1:config.steps
 
-            #Showing the progress
-            if s%opPerc == 0
-                @printf "\033[5D%d%%" (s*100/config.steps) #\033[5D : escaped CSI control sequence to position the cursor
-            end
+            showProgress(start, s, config.steps)
 
             Integrate.step!(config, model, buffer)
 
@@ -55,8 +53,33 @@ module TimeLoop
             end
         end
     
-        @printf "\n"
+        @printf "Done !\n"
 
+    end
+
+    function showProgress(start, s, steps)
+        #Showing the progress
+        updateEvery = 2
+        if s%updateEvery == 0 || s==steps
+            progress = s*100/steps
+            progressInt = Int(floor(progress))
+
+            elapsed = Dates.value(Dates.Millisecond(Dates.Time(Dates.now()) - start))
+            minutesElapsed = elapsed÷60000
+            secondsElapsed = (elapsed%60000)÷1000
+
+            ETA = Int(floor(elapsed / progress * (100-progress)))
+            minutesETA = ETA÷60000
+            secondsETA = (ETA%60000)÷1000
+
+            arrow = ">"
+            if progress == 100
+                arrow = ""
+            end
+
+            progressbar = "[" * "="^((progressInt)÷2) * arrow * " "^(50-progressInt÷2) * "]"
+            @printf "\033[A\033[2K\033[G%2.2d%% %s Remaining %2.2d:%2.2d, elapsed %2.2d:%2.2d\n" progress progressbar minutesETA secondsETA minutesElapsed secondsElapsed #\033[G : escaped CSI control sequence to position the cursor \033[2K clears the line
+        end
     end
 
 end

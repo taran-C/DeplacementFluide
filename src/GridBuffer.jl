@@ -28,35 +28,37 @@ function interpolate(q, i, n)
     return interpFuncs[deg](q, i)
 end
 
-#computes a FDA of dq at the point i
-# function fda(q, i)
-#     if i<length(q)
-#         return (q[i]+q[i+1])/2
-#     else 
-#         return q[i]
-#     end
-# end
+#computes a FDA of dq along dimension dim, TODO upstream
+function dq(q, dim)
+    s = size(q)
+    res = zeros(s...)
 
-function div(U, V, W) #to vectorize, centered TODO replace with upstream fda
-    res = zeros(size(U)...)
-
-    for i = 2:size(U)[1]-1, j = 2:size(V)[2]-1, k = 2:size(W)[3]-1
-        res[i,j,k] = (U[i+1,j,k] - U[i-1,j,k] + V[i,j+1,k] - V[i,j-1,k] + W[i,j,k+1] - W[i,j,k-1])*0.5
+    if dim == 1
+        res[2:s[1]-1,:,:] = (q[3:s[1],:,:]-q[1:s[1]-2,:,:])/2.
+    elseif dim == 2
+        res[:,2:s[2]-1,:] = (q[:,3:s[2],:]-q[:,1:s[2]-2,:])/2.
+    elseif dim == 3
+        res[:,:,2:s[3]-1] = (q[:,:,3:s[3]]-q[:,:,1:s[3]-2])/2.
     end
-    
+
+    # FDA for the second-order derivative
+    # if dim == 1
+    #     res[2:s[1]-1,:,:] = (q[3:s[1],:,:] .+ q[1:s[1]-2,:,:] .- 2. *q[2:s[1]-1,:,:])
+    # elseif dim == 2
+    #     res[:,2:s[2]-1,:] = (q[:,3:s[2],:] .+ q[:,1:s[2]-2,:] .- 2. *q[:,2:s[2]-1,:])
+    # elseif dim == 3
+    #     res[:,:,2:s[3]-1] = (q[:,:,3:s[3]] .+ q[:,:,1:s[3]-2] .- 2. *q[:,:,2:s[3]-1])
+    # end
+
     return res
 end
 
-function grad(q) #to vectorize, centered TODO replace with upstream fda
-    res = zeros(3, size(q)...)
+function div(U, V, W)
+    return dq(U, 1) + dq(V, 2) + dq(W, 3)
+end
 
-    for i = 2:size(q)[1]-1, j = 2:size(q)[2]-1, k = 2:size(q)[3]-1
-        res[1,i,j,k] = (q[i+1,j,k]-q[i-1,j,k])*0.5
-        res[2,i,j,k] = (q[i,j+1,k]-q[i,j-1,k])*0.5
-        res[3,i,j,k] = (q[i,j,k+1]-q[i,j,k-1])*0.5
-    end
-
-    return res
+function grad(q)
+    return permutedims([dq(q,1);;;;dq(q,2);;;;dq(q,3)], [4,1,2,3])
 end
 
 function cross(u1,v1,w1,u2,v2,w2)
