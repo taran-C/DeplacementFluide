@@ -12,34 +12,47 @@ mutable struct Buffer
     model
 end
 
+#constructs a tuple giving the coordinates of a 3d slice along dim at the specified index
+slice3D(dim, index) = ((dim==1) ? index : Colon(), (dim==2) ? index : Colon(), (dim==3) ? index : Colon())
+
 #Functions of an array q and an index i giving the interpolated value at q(i+1/2)
-interpFuncs =   [(q, i)->q[i],
-                (q, i)->(q[i]+q[i+1])/2.,
-                (q, i)->(-q[i-1]+5*q[i]+2*q[i+1])/6.,
-                (q, i)->(-q[i+1]+7*q[i]+7*q[i+1]-q[i+2])/12.,
-                (q, i)->(2*q[i-2]-13*q[i-1]+47*q[i]+27*q[i+1]-3*q[i+2])/60.]
+interpFuncs =   [(q, i, dim)->q[slice3D(dim, i)...],
+                (q, i, dim)->(q[slice3D(dim, i)...] .+ q[slice3D(dim, i+1)...])/2.,
+                (q, i, dim)->(-q[slice3D(dim, i-1)...] .+ 5*q[slice3D(dim, i)...] .+ 2*q[slice3D(dim, i+1)...])/6.,
+                (q, i, dim)->(-q[slice3D(dim, i-1)...] .+ 7*q[slice3D(dim, i)...] .+ 7*q[slice3D(dim, i+1)...] .- q[slice3D(dim, i+2)...])/12.,
+                (q, i, dim)->(2*q[slice3D(dim, i-2)...] .- 13*q[slice3D(dim, i-1)...] .+ 47*q[slice3D(dim, i)...] .+ 27*q[slice3D(dim, i+1)...] .- 3*q[slice3D(dim, i+2)...])/60.]
 
 #computes q(i+1/2) with the maximum possible degree that we have a function for (TODO optimize)
-#q : array along wich to interpolate
-#i : index to get
+#q : array to interpolate
+#dim : dimension along which to interpolate
 #n : max degree that we want
-function interpolate(q, i, n)
-    deg = min(i, n, length(q) - i + 1, length(interpFuncs))
-    return interpFuncs[deg](q, i)
+function interpolate(q, dim, n)
+
+    s = size(q)
+    res = Array{Float64, 3}(undef, s...)
+
+    num = (s[dim]+1)÷2
+    m = min(n, num)
+
+    for d = 1:m
+        res[slice3D(dim,d)...] = interpFuncs[d](q, d, dim)
+        res[slice3D(dim,s[dim]-d+1)...] = interpFuncs[d](q, s[dim]-d, dim)
+    end
+
+    for d = (m+1):(s[dim]-m)
+        res[slice3D(dim,d)...] = interpFuncs[n](q, d, dim)
+    end
+
+    return res
 end
 
-#computes a FDA of dq along dimension dim, TODO upstream
+
+#computes a FDA of dq along dimension dim, TODO upwind
 function dq(q, dim)
     s = size(q)
     res = zeros(s...)
 
-    if dim == 1
-        res[2:s[1]-1,:,:] = (q[3:s[1],:,:]-q[1:s[1]-2,:,:])/2.
-    elseif dim == 2
-        res[:,2:s[2]-1,:] = (q[:,3:s[2],:]-q[:,1:s[2]-2,:])/2.
-    elseif dim == 3
-        res[:,:,2:s[3]-1] = (q[:,:,3:s[3]]-q[:,:,1:s[3]-2])/2.
-    end
+    res[slice3D(dim, 2:s[dim]-1)...] = (q[slice3D(dim, 3:s[dim])...] - q[slice3D(dim, 1:s[dim]-2)...])/2. #slices might make this unefficient ?
 
     # FDA for the second-order derivative
     # if dim == 1

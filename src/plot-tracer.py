@@ -15,13 +15,15 @@ j = range(len(q[0,:,0]))
 t = 10
 fig,ax = plt.subplots()
 
+# plt.hist(np.ndarray.flatten(q), bins=300)
+
 cax = ax.pcolormesh(i,j,q[:,:,0], vmin=q.min(), vmax=q.max())
 fig.colorbar(cax)
 
 def animate(t):
     cax.set_array(q[:,:,t])
-    #print(q[:,:,t].max())
-    #print(t)
+    #print(q[:,:,t].mean())
+    print(t)
 
 animator = animation.FuncAnimation(fig, animate, interval=5, frames = len(q[0,0,:]))
 #animator.save('output/tracer.gif', dpi=200, writer='magick')

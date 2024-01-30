@@ -35,7 +35,7 @@ function getLorenz()
 
     #update functions for the variables, in the same order
 
-    RHS(vars) = permutedims([
+    RHS(vars, config) = permutedims([
         params[1] * (vars[2,:,:,:] .- vars[1,:,:,:]);;;; # σ[y(t)-x(t)]
         params[2] * vars[1,:,:,:] .- vars[2,:,:,:] .- vars[1,:,:,:] .* vars[3,:,:,:];;;; # ρx(t) - y(t) -x(t)z(t)
         vars[1,:,:,:] .* vars[2,:,:,:] .- params[3] * vars[3,:,:,:] # x(t)y(t) - βz(t)
@@ -56,10 +56,11 @@ function getTransport3DTraceurFlux()
     variables[4] = t_variable("q", true, :center)
 
     #setting up update functions
-    RHS(vars) = begin
+    RHS(vars, config) = begin
         v1 = zeros(size(vars[1,:,:,:])...) #velocity field is constant, bad, should have constant fields as parameters I guess ?
         v2 = zeros(size(vars[1,:,:,:])...)
         v3 = zeros(size(vars[1,:,:,:])...)
+        #v4 = - GridBuffer.div(GridBuffer.interpolate(vars[4,:,:,:], 1, config.interpDeg) .* vars[1,:,:,:], GridBuffer.interpolate(vars[4,:,:,:], 2, config.interpDeg) .* vars[2,:,:,:], GridBuffer.interpolate(vars[4,:,:,:], 3, config.interpDeg) .* vars[3,:,:,:]) # -∇·(Uq)
         v4 = - GridBuffer.div(vars[4,:,:,:] .* vars[1,:,:,:], vars[4,:,:,:] .* vars[2,:,:,:], vars[4,:,:,:] .* vars[3,:,:,:]) # -∇·(Uq), U should be interpolated
         
         return permutedims(cat(v1,v2,v3,v4, dims=4), [4,1,2,3]) #ugly and unefficient TODO improve
@@ -80,7 +81,7 @@ function getTransport3DTraceurScalaire()
     variables[4] = t_variable("q", true, :center)
 
     #setting up update functions
-    RHS(vars) = begin
+    RHS(vars, config) = begin
         v1 = zeros(size(vars[1,:,:,:])...) #velocity field is constant, bad, should have constant fields as parameters I guess ?
         v2 = zeros(size(vars[1,:,:,:])...)
         v3 = zeros(size(vars[1,:,:,:])...)
